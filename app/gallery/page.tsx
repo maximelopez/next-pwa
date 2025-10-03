@@ -1,6 +1,6 @@
 export default function Gallery() {
   return (
-    <div>
+    <div className="container">
         <h1>Gallery</h1>
     </div>
   )

@@ -18,7 +18,6 @@ export default function Camera() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          await videoRef.current.play();
         }
       } catch (err) {
         console.error("Erreur accès caméra :", err);
@@ -56,17 +55,19 @@ export default function Camera() {
 
   return (
     <div>
-      <video
-        ref={videoRef}
-        style={{ width: "100%", maxWidth: 400, background: "#000", transform: "scaleX(-1)" }}
-        autoPlay
-        muted
-        playsInline
-      />
+      <div className="camera-section">
+        <video
+          ref={videoRef}
+          style={{ width: "100%", maxWidth: 400, background: "#000", transform: "scaleX(-1)" }}
+          autoPlay
+          muted
+          playsInline
+        />
 
-      <button onClick={takePhoto} style={{ padding: "8px 12px" }}>
-        Prendre une photo
-      </button>
+        <button onClick={takePhoto} className="camera-btn">
+          Prendre une photo
+        </button>
+      </div> 
 
       {photo && (
         <div>

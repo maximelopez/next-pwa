@@ -1,6 +1,6 @@
 export default function Reception() {
   return (
-    <div>
+    <div className="container">
         <h1>Reception</h1>
     </div>
   )
