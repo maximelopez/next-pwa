@@ -1,23 +1,23 @@
-const CACHE_NAME = 'pwa-next-v2';
-
-const PRECACHE_URLS = [
-  '/',
-  '/room',
-  '/reception',
-  '/gallery',
-  '/offline.html'
+const CACHE_NAME = "next-pwa-v11";
+const urlsToCache = [
+  "/", 
+  "/reception", 
+  "/room", 
+  "/gallery", 
+  "/favicon.ico", 
+  "/icon1.png",
+  "/icon2.png",
+  "/offline.html"
 ];
 
-// INSTALL : on met en cache les fichiers essentiels
-self.addEventListener('install', (event) => {
-  self.skipWaiting(); 
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   );
+  self.skipWaiting();
 });
 
-// ACTIVATE : on nettoie les anciens caches
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.map((key) => key !== CACHE_NAME && caches.delete(key)))
@@ -26,26 +26,17 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// FETCH : stratégie réseau + fallback offline
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-
-  // Navigation (pages HTML)
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-          return res;
-        })
-        .catch(() => caches.match('/offline.html'))
-    );
-    return;
-  }
-
-  // Pour les assets (CSS, JS, images) → cache-first
+self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(req).then((cached) => cached || fetch(req))
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(event.request).catch(() => {
+        if (event.request.destination === "document") {
+          return caches.match("/");
+        }
+        return new Response("", { status: 503, statusText: "Offline" });
+      });
+    })
   );
 });
