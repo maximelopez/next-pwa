@@ -3,7 +3,7 @@
 export default function Page() {
   return (
     <div className="container">
-      <h1>Home</h1>
+      <h1>Bienvenue sur mon application Next.js</h1>
     </div>
   );
 }
