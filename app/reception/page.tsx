@@ -18,6 +18,7 @@ export default function Room() {
   const [connected, setConnected] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [status, setStatus] = useState("Non connecté");
+  const [currentRoom, setCurrentRoom] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(BASE_URL + "/socketio/api/rooms")
@@ -40,13 +41,19 @@ export default function Room() {
     return decoded;
   }
 
-const connectSocket = () => {
+  // 🔹 Connexion socket
+  const connectSocket = () => {
     console.log("Connexion à :", BASE_URL);
     const s = io(BASE_URL, {
       path: "/socket.io",
-      transports: ["websocket"], // force le websocket
+      transports: ["websocket"],
       withCredentials: false,
     });
+
+    // ⚠️ Si un ancien socket existait, on le ferme
+    if (socket) {
+      socket.disconnect();
+    }
 
     setSocket(s);
     setStatus("Connexion en cours...");
@@ -54,21 +61,35 @@ const connectSocket = () => {
     s.on("connect", () => {
       console.log("✅ Connecté ! ID :", s.id);
       setStatus("✅ Connecté");
-
-      // 👉 Rejoindre une room après connexion
-      const roomName = "general";
-
-      s.emit("chat-join-room", {
-        pseudo,
-        roomName,
-      });
-
-      console.log(`🎯 Tentative de rejoindre la room "${roomName}"`);
     });
 
+    // ⚡ On écoute UNE SEULE FOIS cet événement
     s.on("chat-joined-room", (data) => {
       console.log("🎉 Rejoint la room avec succès :", data);
+      setCurrentRoom(data.roomName);
     });
+
+    s.on("disconnect", () => {
+      console.log("🔌 Déconnecté du serveur");
+      setStatus("Déconnecté");
+    });
+  };
+
+
+  // 🔹 Fonction séparée pour rejoindre une room
+  const joinRoom = (roomName: string) => {
+    if (!socket) {
+      console.warn("⚠️ Socket non initialisé !");
+      return;
+    }
+
+    if (currentRoom && currentRoom !== roomName) {
+      console.log(`🚪 Quitte la room "${currentRoom}"`);
+      socket.emit("chat-leave-room", { roomName: currentRoom });
+    }
+
+    console.log(`➡️ Tentative de rejoindre la room "${roomName}"`);
+    socket.emit("chat-join-room", { pseudo, roomName });
   };
 
   return (
@@ -147,10 +168,16 @@ const connectSocket = () => {
             safeDecode(room).toLowerCase().includes(search.toLowerCase())
           )
           .map((room, key) => (
-            <div className="room-item" key={key}>
+            <div 
+              className="room-item" 
+              key={key}
+              onClick={() => joinRoom(safeDecode(room))}
+            >
               {safeDecode(room)}
             </div>
         ))}
+         <p className="room-status">💬 Room actuelle : {currentRoom}</p>
+        <p className="socket-status">{status}</p>
       </div>
     )}
     </div>
