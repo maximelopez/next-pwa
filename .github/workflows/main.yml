@@ -19,10 +19,10 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /var/mds/pwa-project
+            cd /var/mds/pwa-maxime
             rm -rf .next                    # supprime les anciens builds
             git pull origin main
             npm ci                          # installation propre et complète
             npm run build                   # génère le dossier .next/
-            pm2 delete mds || true          # supprime l’ancien process s’il existe
-            pm2 start npm --name mds -- start
+            pm2 delete next-pwa || true          # supprime l’ancien process s’il existe
+            pm2 start npm --name next-pwa -- start
