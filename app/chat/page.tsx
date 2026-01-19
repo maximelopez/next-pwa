@@ -24,7 +24,6 @@ export default function Room() {
   const [rooms, setRooms] = useState<Record<string, RoomData>>({});
   const [search, setSearch] = useState("");
   const [pseudo, setPseudo] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
   const [connected, setConnected] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [status, setStatus] = useState("Non connecté");
@@ -132,13 +131,6 @@ export default function Room() {
             onChange={(e) => setPseudo(e.target.value)}
             className="login-input"
           />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-            className="login-input"
-          />
-          {photo && <img src={URL.createObjectURL(photo)} alt="Aperçu" className="photo-preview" />}
           <button className="login-btn" disabled={!pseudo} onClick={connectSocket}>
             Se connecter
           </button>
@@ -149,8 +141,7 @@ export default function Room() {
           <div className="header-reception">
             <h1>Liste des rooms</h1>
             <div className="user-info">
-              <span className="pseudo">{pseudo}</span>
-              {photo && <img src={URL.createObjectURL(photo)} alt="Photo" className="user-photo-preview" />}
+              <span className="pseudo">{status} : {pseudo}</span>
             </div>
           </div>
 
@@ -171,7 +162,6 @@ export default function Room() {
                 {safeDecode(room)}
               </div>
             ))}
-          <p className="socket-status">{status}</p>
         </div>
       ) : (
         // 💬 Chat room
@@ -191,7 +181,7 @@ export default function Room() {
             .filter(msg => msg.pseudo && msg.pseudo !== "SERVER")
             .map((msg, i) => (
               <div key={i}  className={`chat-message ${msg.pseudo === pseudo ? "self" : "other"}`}>
-                <strong>{msg.pseudo || "Anon"}:</strong> {msg.content}
+                <strong>{msg.pseudo || "Anon"}</strong> {msg.content}
               </div>
             ))}
           </div>
