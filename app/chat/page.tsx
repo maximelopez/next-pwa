@@ -2,11 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
-import { useRouter } from "next/navigation";
 
 interface RoomData {
   roomName: string;
   clients: Record<string, { pseudo: string; initiator: boolean }>;
+}
+
+interface ChatMessage {
+  content: string;
+  dateEmis?: string;
+  roomName: string;
+  categorie?: string;
+  userId?: string;
+  serverId?: string;
+  pseudo?: string;
 }
 
 const BASE_URL = "https://api.tools.gavago.fr";
@@ -21,7 +30,9 @@ export default function Room() {
   const [status, setStatus] = useState("Non connecté");
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
 
-  const router = useRouter();
+  // 🔹 Chat
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     fetch(BASE_URL + "/socketio/api/rooms")
@@ -34,13 +45,11 @@ export default function Room() {
 
   function safeDecode(str: string): string {
     let decoded = str;
-    
     while (decoded.includes("%")) {
       const newDecoded = decodeURIComponent(decoded);
       if (newDecoded === decoded) break;
       decoded = newDecoded;
-    }   
-
+    }
     return decoded;
   }
 
@@ -53,11 +62,7 @@ export default function Room() {
       withCredentials: false,
     });
 
-    // ⚠️ Si un ancien socket existait, on le ferme
-    if (socket) {
-      socket.disconnect();
-    }
-
+    if (socket) s.disconnect();
     setSocket(s);
     setStatus("Connexion en cours...");
 
@@ -67,9 +72,14 @@ export default function Room() {
       setStatus("✅ Connecté");
     });
 
-    // ⚡ On écoute UNE SEULE FOIS cet événement
-    s.on("chat-joined-room", (data) => {
-      console.log("🎉 Rejoint la room avec succès :", data);
+    // 🔹 Écoute des messages du serveur
+    s.on("chat-msg", (msg: ChatMessage & { pseudo?: string }) => {
+      setMessages((prev) => [...prev, msg]);
+    });
+
+    // 🔹 Quand on rejoint une room
+    s.on("chat-joined-room", (data: { roomName: string }) => {
+      console.log("🎉 Rejoint la room :", data.roomName);
       setCurrentRoom(data.roomName);
     });
 
@@ -78,115 +88,131 @@ export default function Room() {
       setConnected(false);
       setStatus("Déconnecté");
     });
+
+    // 🔹 Écoute des erreurs
+    s.on("error", (msg: string) => {
+      alert(`Erreur du serveur: ${msg}`);
+    });
   };
 
-
-  // 🔹 Fonction séparée pour rejoindre une room
+  // 🔹 Rejoindre une room
   const joinRoom = (roomName: string) => {
-    if (!socket) {
-      console.warn("⚠️ Socket non initialisé !");
-      return;
-    }
-
-    if (currentRoom && currentRoom !== roomName) {
-      console.log(`🚪 Quitte la room "${currentRoom}"`);
-      socket.emit("chat-leave-room", { roomName: currentRoom });
-    }
-
-    console.log(`➡️ Tentative de rejoindre la room "${roomName}"`);
+    if (!socket) return;
+    if (currentRoom) socket.emit("chat-leave-room", { roomName: currentRoom });
     socket.emit("chat-join-room", { pseudo, roomName });
-    
-    // Naviguer vers la room
-    router.push(`/chat/${encodeURIComponent(roomName)}`);
+  };
+
+  // 🔹 Envoyer un message
+  const sendMessage = () => {
+    if (!socket || !message || !currentRoom) return;
+
+    // 🔹 Envoyer au serveur via chat-msg
+    socket.emit("chat-msg", { content: message, roomName: currentRoom, pseudo });
+
+    setMessage("");
+  };
+
+  // 🔹 Retour à la liste des rooms
+  const leaveRoom = () => {
+    if (!socket || !currentRoom) return;
+    socket.emit("chat-leave-room", { roomName: currentRoom });
+    setCurrentRoom(null);
+    setMessages([]);
   };
 
   return (
     <div className="container">
-
-      {connected &&
-      <div className="header-reception">
-        <h1>Liste des rooms</h1>
-          <div className="user-info">
-          <span className="pseudo">{pseudo}</span>
-          {photo && (
-            <img
-              src={URL.createObjectURL(photo)}
-              alt="Photo"
-              className="user-photo-preview"
-            />
-          )}
-        </div>
-      </div>
-      }
-
       {!connected ? (
-      <div className="login-form">
-        <h2>Connexion</h2>
-        <input
-          type="text"
-          placeholder="Votre pseudo"
-          value={pseudo}
-          onChange={(e) => setPseudo(e.target.value)}
-          className="login-input"
-        />
-
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-          className="login-input"
-        />
-
-        {photo && (
-          <img
-            src={URL.createObjectURL(photo)}
-            alt="Aperçu"
-            className="photo-preview"
+        <div className="login-form">
+          <h2>Connexion</h2>
+          <input
+            type="text"
+            placeholder="Votre pseudo"
+            value={pseudo}
+            onChange={(e) => setPseudo(e.target.value)}
+            className="login-input"
           />
-        )}
-
-        <button
-          className="login-btn"
-          disabled={!pseudo}
-          onClick={() => {
-            connectSocket();
-          }}
-        >
-          Se connecter
-        </button>
-      </div>
-    ) : (
-      <div className="list-rooms">
-
-        
-        <input
-          type="text"
-          placeholder="Rechercher une room..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="room-search"
-        />
-
-
-        <div className="room-separator"></div>
-
-        {Object.keys(rooms)
-          .filter((room) =>
-            safeDecode(room).toLowerCase().includes(search.toLowerCase())
-          )
-          .map((room, key) => (
-            <div 
-              className="room-item" 
-              key={key}
-              onClick={() => joinRoom(safeDecode(room))}
-            >
-              {safeDecode(room)}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+            className="login-input"
+          />
+          {photo && <img src={URL.createObjectURL(photo)} alt="Aperçu" className="photo-preview" />}
+          <button className="login-btn" disabled={!pseudo} onClick={connectSocket}>
+            Se connecter
+          </button>
+        </div>
+      ) : !currentRoom ? (
+        // 🌐 Liste des rooms
+        <div className="list-rooms">
+          <div className="header-reception">
+            <h1>Liste des rooms</h1>
+            <div className="user-info">
+              <span className="pseudo">{pseudo}</span>
+              {photo && <img src={URL.createObjectURL(photo)} alt="Photo" className="user-photo-preview" />}
             </div>
-        ))}
-         <p className="room-status">💬 Room actuelle : {currentRoom}</p>
-        <p className="socket-status">{status}</p>
-      </div>
-    )}
+          </div>
+
+          <input
+            type="text"
+            placeholder="Rechercher une room..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="room-search"
+          />
+
+          <div className="room-separator"></div>
+
+          {Object.keys(rooms)
+            .filter((room) => safeDecode(room).toLowerCase().includes(search.toLowerCase()))
+            .map((room, key) => (
+              <div className="room-item" key={key} onClick={() => joinRoom(safeDecode(room))}>
+                {safeDecode(room)}
+              </div>
+            ))}
+          <p className="socket-status">{status}</p>
+        </div>
+      ) : (
+        // 💬 Chat room
+        <div className="chat-container">
+          <div className="header-reception">
+             <button className="login-btn" onClick={leaveRoom}>
+              ⬅ Retour
+            </button>
+            <h1>Room : {currentRoom}</h1>
+          </div>
+
+          <div
+            className="chat-messages"
+            style={{ maxHeight: "400px", overflowY: "auto", marginBottom: "12px" }}
+          >
+            {messages
+            .filter(msg => msg.pseudo && msg.pseudo !== "SERVER")
+            .map((msg, i) => (
+              <div key={i}  className={`chat-message ${msg.pseudo === pseudo ? "self" : "other"}`}>
+                <strong>{msg.pseudo || "Anon"}:</strong> {msg.content}
+              </div>
+            ))}
+          </div>
+
+          <div className="chat-input" style={{ display: "flex", gap: "8px" }}>
+            <input
+              type="text"
+              placeholder="Votre message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") sendMessage();
+              }}
+              style={{ flex: 1, padding: "8px", borderRadius: "8px", border: "1px solid #ccc" }}
+            />
+            <button className="login-btn" onClick={sendMessage}>
+              Envoyer
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

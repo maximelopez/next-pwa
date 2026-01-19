@@ -57,10 +57,11 @@ a {
 .header-reception {
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   margin-bottom: 40px;
   padding: 10px 0;
+  gap: 20px;
 }
 
 h1 {
@@ -208,4 +209,93 @@ h1 {
   object-fit: cover;
   border-radius: 50%;
   border: 2px solid var(--accent);
+}
+
+/* Variables déjà définies dans ton :root */
+.chat-container {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 20px;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+}
+
+.chat-messages {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--card-bg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.chat-message {
+  padding: 8px 12px;
+  background: #f1f1f1;
+  border-radius: 8px;
+  word-break: break-word;
+}
+
+.chat-message strong {
+  color: var(--foreground);
+}
+
+.chat-input {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  background: var(--card-bg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease-in-out;
+}
+
+.chat-input input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.chat-input button {
+  padding: 10px 16px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.chat-input button:hover {
+  background: var(--accent-hover);
+}
+
+/* Messages envoyés par moi */
+.chat-message.self {
+  align-self: flex-end;
+  background-color: #a8ffb0; /* vert clair */
+  color: #000;
+  border-radius: 12px 12px 0 12px; /* arrondi différent pour le style */
+}
+
+/* Messages des autres */
+.chat-message.other {
+  align-self: flex-start;
+  background-color: #a0c4ff; /* bleu clair */
+  color: #000;
+  border-radius: 12px 12px 12px 0;
 }
