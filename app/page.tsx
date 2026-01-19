@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import BatteryStatus from "@/components/BatteryStatus";
 
 export default function Page() {
   const [city, setCity] = useState<string | null>(null);
@@ -47,6 +48,7 @@ export default function Page() {
   return (
     <div className="container">
       <h1>Bienvenue sur mon application Next.js</h1>
+      <BatteryStatus />
 
       {city && <p>📍 Vous êtes à : <strong>{city}</strong></p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
