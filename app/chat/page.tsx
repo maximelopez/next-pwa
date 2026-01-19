@@ -80,7 +80,7 @@ export default function Room() {
     // 🔹 Quand on rejoint une room
     s.on("chat-joined-room", (data: { roomName: string }) => {
       console.log("🎉 Rejoint la room :", data.roomName);
-      setCurrentRoom(data.roomName);
+      setCurrentRoom(prev => prev ?? data.roomName);
     });
 
     s.on("disconnect", () => {
