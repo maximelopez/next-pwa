@@ -19,12 +19,12 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /var/mds/pwa-maxime           # dossier exact de ton projet
-            rm -rf .next                      # supprime les anciens builds
-            git reset --hard                  # assure toi que les fichiers sont à jour
-            git pull origin main              # récupère la dernière version
-            npm ci                            # installation propre
-            npm run build                     # build Next.js
-            pm2 delete next-pwa || true       # supprime l’ancien process
-            pm2 start npm --name next-pwa -- start -- -p 40110  # relance sur le bon port
-            pm2 save                          # sauvegarde PM2 pour le redémarrage automatique
+            cd /var/mds/pwa-maxime
+            rm -rf .next                    # supprime les anciens builds
+            git fetch origin main
+            git reset --hard origin/main    # écrase tous les fichiers avec GitHub
+            npm ci                          # installation propre et complète
+            npm run build                   # génère le dossier .next/
+            pm2 delete next-pwa || true     # supprime l’ancien process
+            pm2 start npm --name next-pwa -- start -- -p 40110
+            pm2 save                        # sauvegarde PM2 pour redémarrage automatique
