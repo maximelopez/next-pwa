@@ -1,7 +1,11 @@
+"use client";
+
+import Camera from "../../components/Camera";
+
 export default function Gallery() {
   return (
     <div className="container">
-        <h1>Gallery</h1>
+        <Camera />
     </div>
   )
 }
