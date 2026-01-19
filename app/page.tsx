@@ -12,7 +12,7 @@ const MapLocation = dynamic(() => import("@/components/MapLocation"), {
 export default function Page() {
   return (
     <div className="container" style={{ padding: "2rem" }}>
-      <h1>Bienvenue sur mon application Next.js</h1>
+      <h1>Bienvenue sur mon application Next.js 2</h1>
 
       <BatteryStatus />
 
