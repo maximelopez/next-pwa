@@ -1,24 +1,24 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 
-export default function Camera() {
+interface CameraProps {
+  addPhoto: (photo: string) => void;
+}
+
+export default function Camera({ addPhoto }: CameraProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [photo, setPhoto] = useState<string | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     async function startCamera() {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.error("getUserMedia non supporté par ce navigateur");
-        return;
-      }
+      if (!navigator.mediaDevices?.getUserMedia) return;
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
+        streamRef.current = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
       } catch (err) {
         console.error("Erreur accès caméra :", err);
       }
@@ -27,14 +27,16 @@ export default function Camera() {
     startCamera();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach((track) => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
       }
     };
   }, []);
 
-  // Capture la photo
   const takePhoto = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
@@ -43,14 +45,13 @@ export default function Camera() {
     canvas.height = video.videoHeight || 480;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    
-    // Inverser horizontalement
-    ctx.translate(canvas.width, 0); // déplace l'origine à droite
-    ctx.scale(-1, 1);               // inverse horizontalement
+
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     const dataUrl = canvas.toDataURL("image/png");
-    setPhoto(dataUrl);
+    addPhoto(dataUrl);
   };
 
   return (
@@ -63,22 +64,11 @@ export default function Camera() {
           muted
           playsInline
         />
-
         <button onClick={takePhoto} className="camera-btn">
           Prendre une photo
         </button>
-      </div> 
-
-      {photo && (
-        <div>
-          <h4>Photo capturée :</h4>
-          <img src={photo} alt="Capture" style={{ width: "100%", maxWidth: 400 }} />
-        </div>
-      )}
-
-      {/* Canvas caché pour capture */}
+      </div>
       <canvas ref={canvasRef} style={{ display: "none" }} />
-
     </div>
   );
 }

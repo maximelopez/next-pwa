@@ -21,10 +21,8 @@ jobs:
           script: |
             cd /var/mds/pwa-maxime
             rm -rf .next                    # supprime les anciens builds
-            git fetch origin main
-            git reset --hard origin/main    # écrase tous les fichiers avec GitHub
+            git pull origin main
             npm ci                          # installation propre et complète
             npm run build                   # génère le dossier .next/
-            pm2 delete next-pwa || true     # supprime l’ancien process
-            pm2 start npm --name next-pwa -- start -- -p 40110
-            pm2 save                        # sauvegarde PM2 pour redémarrage automatique
+            pm2 delete next-pwa || true          # supprime l’ancien process s’il existe
+            pm2 start npm --name next-pwa -- start
