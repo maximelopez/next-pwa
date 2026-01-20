@@ -52,6 +52,11 @@ export default function Room() {
     return decoded;
   }
 
+  // ✅ SEULE MODIF AJOUTÉE
+  function isImageContent(content: string) {
+    return content.startsWith("data:image/");
+  }
+
   // 🔹 Connexion socket
   const connectSocket = () => {
     console.log("Connexion à :", BASE_URL);
@@ -105,9 +110,7 @@ export default function Room() {
   const sendMessage = () => {
     if (!socket || !message || !currentRoom) return;
 
-    // 🔹 Envoyer au serveur via chat-msg
     socket.emit("chat-msg", { content: message, roomName: currentRoom, pseudo });
-
     setMessage("");
   };
 
@@ -136,7 +139,6 @@ export default function Room() {
           </button>
         </div>
       ) : !currentRoom ? (
-        // 🌐 Liste des rooms
         <div className="list-rooms">
           <div className="header-reception">
             <h1>Liste des rooms</h1>
@@ -164,12 +166,9 @@ export default function Room() {
             ))}
         </div>
       ) : (
-        // 💬 Chat room
         <div className="chat-container">
           <div className="header-reception">
-             <button className="login-btn" onClick={leaveRoom}>
-              ⬅ Retour
-            </button>
+            <button className="login-btn" onClick={leaveRoom}>⬅ Retour</button>
             <h1>Room : {currentRoom}</h1>
           </div>
 
@@ -178,12 +177,26 @@ export default function Room() {
             style={{ maxHeight: "400px", overflowY: "auto", marginBottom: "12px" }}
           >
             {messages
-            .filter(msg => msg.pseudo && msg.pseudo !== "SERVER")
-            .map((msg, i) => (
-              <div key={i}  className={`chat-message ${msg.pseudo === pseudo ? "self" : "other"}`}>
-                <strong>{msg.pseudo || "Anon"}</strong> {msg.content}
-              </div>
-            ))}
+              .filter(msg => msg.pseudo && msg.pseudo !== "SERVER")
+              .map((msg, i) => (
+                <div key={i} className={`chat-message ${msg.pseudo === pseudo ? "self" : "other"}`}>
+                  <strong>{msg.pseudo || "Anon"}</strong>{" "}
+                  {isImageContent(msg.content) ? (
+                    <img
+                      src={msg.content}
+                      alt="image"
+                      style={{
+                        maxWidth: "250px",
+                        display: "block",
+                        marginTop: "6px",
+                        borderRadius: "8px",
+                      }}
+                    />
+                  ) : (
+                    msg.content
+                  )}
+                </div>
+              ))}
           </div>
 
           <div className="chat-input" style={{ display: "flex", gap: "8px" }}>

@@ -6,7 +6,7 @@ export default function Header() {
       <nav className='header-nav'>
         <Link href="/">Accueil</Link>
         <Link href="/chat">Chat</Link>
-        <Link href="/gallery">Gallery</Link>
+        <Link href="/gallery">Gallerie</Link>
       </nav>
     </header>
   )
