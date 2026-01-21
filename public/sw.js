@@ -1,8 +1,7 @@
-const CACHE_NAME = "next-pwa-v11";
+const CACHE_NAME = "next-pwa-v12";
 const urlsToCache = [
-  "/", 
-  "/reception", 
-  "/room", 
+  "/",
+  "/chat", 
   "/gallery", 
   "/favicon.ico", 
   "/icon1.png",
